@@ -5,41 +5,38 @@
 <title>Configurar contraseña</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
   body {
     background: linear-gradient(135deg, #74ebd5, #ACB6E5);
-    height: 100vh;
-    display: flex; justify-content: center; align-items: center;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
   }
   .container {
-    background: #fff;
-    padding: 40px 50px;
-    border-radius: 15px;
-    box-shadow: 0 15px 25px rgba(0,0,0,0.2);
-    width: 350px;
-    text-align: center;
+    background:#fff;
+    padding:40px 50px;
+    border-radius:15px;
+    box-shadow:0 15px 25px rgba(0,0,0,0.2);
+    width:350px;
+    text-align:center;
   }
-  h2 { color: #333; margin-bottom: 25px; font-size: 1.8em; }
+  h2 { color:#333; margin-bottom:25px; font-size:1.8em; }
   input[type="password"] {
-    width: 100%; padding: 12px 15px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px;
-    outline: none; transition: 0.3s;
+    width:100%; padding:12px 15px; margin:10px 0; border:1px solid #ccc; border-radius:8px;
+    outline:none; transition:0.3s;
   }
-  input[type="password"]:focus { border-color: #74ebd5; box-shadow: 0 0 8px rgba(116,235,213,0.4); }
+  input[type="password"]:focus { border-color:#74ebd5; box-shadow:0 0 8px rgba(116,235,213,0.4); }
   button {
-    width: 100%; padding: 12px; background: #74ebd5; border: none; border-radius: 8px;
-    color: #fff; font-size: 1em; cursor: pointer; transition: 0.3s; margin-top: 15px;
+    width:100%; padding:12px; background:#74ebd5; border:none; border-radius:8px;
+    color:#fff; font-size:1em; cursor:pointer; transition:0.3s; margin-top:15px;
   }
-  button:hover { background: #67d9c6; }
-  .message { margin-top: 15px; font-size: 0.95em; color: #e74c3c; min-height: 20px; text-align: left; }
-  .message.success { color: #27ae60; }
-  .criteria {
-    font-size: 0.85em;
-    margin-top: 5px;
-    text-align: left;
-    color: #e74c3c;
-  }
-  .criteria.valid { color: #27ae60; }
-  .criteria span { display: block; }
+  button:hover { background:#67d9c6; }
+  .message { margin-top:15px; font-size:0.95em; color:#e74c3c; min-height:20px; text-align:left; }
+  .message.success { color:#27ae60; }
+  .criteria { font-size:0.85em; margin-top:5px; text-align:left; color:#e74c3c; }
+  .criteria.valid { color:#27ae60; }
+  .criteria span { display:block; }
 </style>
 </head>
 <body>
@@ -60,53 +57,104 @@
 </div>
 
 <script>
-const supabaseUrl = "https://wptspqcmjstvuwugcepu.supabase.co";
-const supabaseKey = "TU_SUPABASE_KEY";
-const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+  // Supabase
+  const supabaseUrl = "https://wptspqcmjstvuwugcepu.supabase.co";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwdHNwcWNtanN0dnV3dWdjZXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2MjIxMjQsImV4cCI6MjA4NjE5ODEyNH0.teEFc_0NR8MuYygh8KPSXq3yKdPUABuoJvP5QHhZjq4";
+  const client = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-const message = document.getElementById("message");
+  const message = document.getElementById("message");
+  const passwordInput = document.getElementById("password");
+  const confirmInput = document.getElementById("confirmPassword");
 
-const hash = window.location.hash.substring(1);
-const params = new URLSearchParams(hash);
-const access_token = params.get('access_token');
+  const criteria = {
+    length: document.getElementById("length"),
+    lower: document.getElementById("lower"),
+    upper: document.getElementById("upper"),
+    number: document.getElementById("number"),
+    symbol: document.getElementById("symbol")
+  };
+  const matchMsg = document.getElementById("match");
 
-if (!access_token) {
-  message.textContent = "Enlace inválido o expirado.";
-  document.getElementById("saveBtn").disabled = true;
-} else {
-  client.auth.setSession({
-    access_token: access_token,
-    refresh_token: params.get('refresh_token')
-  });
-}
+  // Obtener tokens desde la URL
+  const hash = window.location.hash.substring(1);
+  const params = new URLSearchParams(hash);
+  const access_token = params.get('access_token');
+  const refresh_token = params.get('refresh_token');
 
-document.getElementById("saveBtn").addEventListener("click", async () => {
-  const password = document.getElementById("password").value;
-  const confirmPassword = document.getElementById("confirmPassword").value;
-
-  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-  if (!regex.test(password)) {
-    message.textContent = "Debe tener mínimo 8 caracteres, mayúscula, minúscula, número y símbolo.";
-    message.classList.remove('success');
-    return;
-  }
-
-  if (password !== confirmPassword) {
-    message.textContent = "Las contraseñas no coinciden.";
-    message.classList.remove('success');
-    return;
-  }
-
-  const { data: user, error } = await client.auth.updateUser({ password });
-
-  if (error) {
-    message.textContent = "Error: " + error.message;
-    message.classList.remove('success');
+  // Si no hay token válido, bloquear botón
+  if (!access_token) {
+    message.textContent = "Enlace inválido o expirado.";
+    document.getElementById("saveBtn").disabled = true;
   } else {
-    message.textContent = "Contraseña configurada correctamente.";
-    message.classList.add('success');
+    // Configurar sesión en Supabase
+    client.auth.setSession({ access_token, refresh_token });
   }
-});
+
+  // Limpiar mensajes al escribir
+  passwordInput.addEventListener("input", () => {
+    message.textContent = "";
+    message.classList.remove("success");
+    updateCriteria(passwordInput.value);
+    updateMatch();
+  });
+  confirmInput.addEventListener("input", () => {
+    message.textContent = "";
+    message.classList.remove("success");
+    updateMatch();
+  });
+
+  // Función validación en tiempo real
+  function updateCriteria(val) {
+    criteria.length.classList.toggle('valid', val.length >= 8);
+    criteria.lower.classList.toggle('valid', /[a-z]/.test(val));
+    criteria.upper.classList.toggle('valid', /[A-Z]/.test(val));
+    criteria.number.classList.toggle('valid', /\d/.test(val));
+    criteria.symbol.classList.toggle('valid', /[\W_]/.test(val));
+  }
+
+  function updateMatch() {
+    const val = confirmInput.value;
+    if (!val) {
+      matchMsg.textContent = "";
+      return;
+    }
+    matchMsg.textContent = val === passwordInput.value ? "Las contraseñas coinciden" : "Las contraseñas no coinciden";
+    matchMsg.className = val === passwordInput.value ? "criteria valid" : "criteria";
+  }
+
+  // Guardar contraseña
+  document.getElementById("saveBtn").addEventListener("click", async () => {
+    const password = passwordInput.value;
+    const confirmPassword = confirmInput.value;
+
+    if (!access_token) {
+      message.textContent = "Token inválido o expirado.";
+      message.classList.remove("success");
+      return;
+    }
+
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+    if (!regex.test(password)) {
+      message.textContent = "La contraseña no cumple los criterios.";
+      message.classList.remove('success');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      message.textContent = "Las contraseñas no coinciden.";
+      message.classList.remove('success');
+      return;
+    }
+
+    const { data: user, error } = await client.auth.updateUser({ password });
+    if (error) {
+      message.textContent = "Error: " + error.message;
+      message.classList.remove('success');
+    } else {
+      message.textContent = "Contraseña configurada correctamente.";
+      message.classList.add('success');
+    }
+  });
 </script>
 </body>
 </html>
