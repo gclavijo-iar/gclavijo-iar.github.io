@@ -1,6 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Configurar contraseña</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+  body {
+    background: linear-gradient(135deg, #74ebd5, #ACB6E5);
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+  }
+
+  .container {
+    background:#fff;
+    padding:40px 50px;
+    border-radius:15px;
+    box-shadow:0 15px 25px rgba(0,0,0,0.2);
+    width:350px;
+    text-align:center;
+  }
+
+  h2 {
+    color:#333;
+    margin-bottom:25px;
+    font-size:1.8em;
+  }
+
+  input[type="password"] {
+    width:100%;
+    padding:12px 15px;
+    margin:10px 0;
+    border:1px solid #ccc;
+    border-radius:8px;
+    outline:none;
+    transition:0.3s;
+  }
+
+  input[type="password"]:focus {
+    border-color:#74ebd5;
+    box-shadow:0 0 8px rgba(116,235,213,0.4);
+  }
+
+  button {
+    width:100%;
+    padding:12px;
+    background:#74ebd5;
+    border:none;
+    border-radius:8px;
+    color:#fff;
+    font-size:1em;
+    cursor:pointer;
+    transition:0.3s;
+    margin-top:15px;
+  }
+
+  button:hover {
+    background:#67d9c6;
+  }
+
+  button:disabled {
+    background:#bbb;
+    cursor:not-allowed;
+  }
+
+  .message {
+    margin-top:15px;
+    font-size:0.95em;
+    color:#e74c3c;
+    min-height:20px;
+    text-align:left;
+  }
+
+  .message.success {
+    color:#27ae60;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>Establecer contraseña</h2>
+
+  <input type="password" id="password" placeholder="Nueva contraseña">
+  <input type="password" id="confirmPassword" placeholder="Confirmar contraseña">
+
+  <button id="saveBtn">Guardar</button>
+
+  <p class="message" id="message"></p>
+</div>
+
 <script>
   const supabaseUrl = "https://wptspqcmjstvuwugcepu.supabase.co";
-  const supabaseKey = "TU_PUBLIC_ANON_KEY";
+  const supabaseKey = "TU_PUBLIC_ANON_KEY"; // deja tu anon key aquí
   const client = window.supabase.createClient(supabaseUrl, supabaseKey);
 
   const message = document.getElementById("message");
@@ -17,6 +114,7 @@
   const refresh_token = params.get('refresh_token');
 
   async function initSession() {
+
     if (!access_token) {
       message.textContent = "Enlace inválido o expirado.";
       saveBtn.disabled = true;
@@ -34,25 +132,21 @@
       return;
     }
 
-    // Obtener email del usuario
     const { data } = await client.auth.getUser();
     userEmail = data?.user?.email;
   }
 
   initSession();
 
-  // Limpiar mensajes al escribir
-  passwordInput.addEventListener("input", () => {
+  // Limpiar mensaje al escribir
+  passwordInput.addEventListener("input", clearMessage);
+  confirmInput.addEventListener("input", clearMessage);
+
+  function clearMessage() {
     message.textContent = "";
     message.classList.remove("success");
-  });
+  }
 
-  confirmInput.addEventListener("input", () => {
-    message.textContent = "";
-    message.classList.remove("success");
-  });
-
-  // Guardar contraseña
   saveBtn.addEventListener("click", async () => {
 
     const password = passwordInput.value;
@@ -70,18 +164,23 @@
       return;
     }
 
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Procesando...";
+
     // 1️⃣ Actualizar contraseña
     const { error } = await client.auth.updateUser({ password });
 
     if (error) {
       message.textContent = "Error: " + error.message;
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Guardar";
       return;
     }
 
-    // 2️⃣ Cerrar sesión actual
+    // 2️⃣ Cerrar sesión temporal
     await client.auth.signOut();
 
-    // 3️⃣ Intentar login automático
+    // 3️⃣ Login automático
     const { error: loginError } = await client.auth.signInWithPassword({
       email: userEmail,
       password: password
@@ -93,6 +192,8 @@
       showPopup("✅ Contraseña actualizada y sesión iniciada correctamente.");
     }
 
+    saveBtn.disabled = false;
+    saveBtn.textContent = "Guardar";
   });
 
   // Popup moderno
@@ -122,3 +223,6 @@
     }, 4000);
   }
 </script>
+
+</body>
+</html>
